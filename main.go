@@ -91,7 +91,7 @@ func max(cache map[int]xkcdJSONStruct) (maxNumber int) {
 	return maxNumber
 }
 
-func main() {
+func init() {
 	xkcdCacheMap = make(map[int]xkcdJSONStruct)
 	lastPost, err := getLatestXPost()
 	if err != nil {
