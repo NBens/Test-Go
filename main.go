@@ -119,12 +119,17 @@ func main() {
 		// Then add the latest post which we've already fetched in line 105
 		xkcdCacheMap[lastPost.Num] = lastPost
 
+		// Getting the xkcdCacheMap keys to remove the unnecessary items later
 		keys := make([]int, 0)
 		for k := range xkcdCacheMap {
 			keys = append(keys, k)
 		}
+
+		// Sort keys
 		sort.Ints(keys)
-		keys = keys[:len(keys)-10] // Keys to remove from the map
+
+		// Keys to remove from the map, all keys but the last biggest 10
+		keys = keys[:len(keys)-10]
 		for _, element := range keys {
 			delete(xkcdCacheMap, element)
 		}
