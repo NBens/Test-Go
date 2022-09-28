@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 )
@@ -28,23 +27,28 @@ type xkcdJSONStruct struct {
 	Day        string `json:"day"`
 }
 
-func main() {
+//var xkcdCacheMap map[int]xkcdJSONStruct
 
+func getLatestXPost() (xkcdJSONStruct, error) {
 	response, err := http.Get(latestPostUrl)
 	if err != nil {
-		log.Fatal("Error getting the request\n", err)
+		return xkcdJSONStruct{}, err
 	}
 
 	var latestXKCDPost xkcdJSONStruct
-	data, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		log.Fatal("Error reading response\n", err)
-	}
 
-	err = json.Unmarshal(data, &latestXKCDPost)
+	err = json.NewDecoder(response.Body).Decode(&latestXKCDPost)
 	if err != nil {
-		log.Fatal("Error unmarshalling the response\n", err)
+		return xkcdJSONStruct{}, nil
 	}
+	return latestXKCDPost, nil
+}
 
-	fmt.Println(latestXKCDPost)
+func main() {
+
+	latestXKCDPost, err := getLatestXPost()
+	if err != nil {
+		log.Fatal("Couldn't get the latest XKCD post\n", err)
+	}
+	fmt.Println(latestXKCDPost.Num)
 }
