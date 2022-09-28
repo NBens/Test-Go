@@ -27,10 +27,17 @@ type xkcdJSONStruct struct {
 	Day        string `json:"day"`
 }
 
-//var xkcdCacheMap map[int]xkcdJSONStruct
+var xkcdCacheMap map[int]xkcdJSONStruct
 
-func getLatestXPost() (xkcdJSONStruct, error) {
-	response, err := http.Get(latestPostUrl)
+// This function makes a request to an XKCD post with the number "num", and if the number is set to -1, then it gets the latest post
+func getXPost(num int) (xkcdJSONStruct, error) {
+	var url string
+	if num == -1 {
+		url = latestPostUrl
+	} else {
+		url = fmt.Sprintf("https://xkcd.com/%d/info.0.json", num)
+	}
+	response, err := http.Get(url)
 	if err != nil {
 		return xkcdJSONStruct{}, err
 	}
@@ -44,11 +51,34 @@ func getLatestXPost() (xkcdJSONStruct, error) {
 	return latestXKCDPost, nil
 }
 
+// This function makes a request to XKCD's latest post API endpoint, and fetches the data as a xkcdJSONStruct element
+func getLatestXPost() (xkcdJSONStruct, error) {
+	latestPost, err := getXPost(-1)
+	if err != nil {
+		return xkcdJSONStruct{}, err
+	}
+	return latestPost, nil
+}
+
+// This function fetches the last 10 posts by XKCD, from the post with the number "startNum" until "startNum - endNum"
+func getLatestXPosts(startNum, endNum int) ([]xkcdJSONStruct, error) {
+	diff := startNum - endNum
+	results := make([]xkcdJSONStruct, 0)
+	for i := 0; i < diff+1; i++ {
+		temp, err := getXPost(startNum - i)
+		if err != nil {
+			return nil, err
+		}
+		results = append(results, temp)
+	}
+	return results, nil
+}
+
 func main() {
 
-	latestXKCDPost, err := getLatestXPost()
+	latestXKCDPosts, err := getLatestXPosts(2677, 2673) // Get the last 5 posts
 	if err != nil {
-		log.Fatal("Couldn't get the latest XKCD post\n", err)
+		log.Fatal("Couldn't get the latest XKCD posts\n", err)
 	}
-	fmt.Println(latestXKCDPost.Num)
+	fmt.Println(latestXKCDPosts)
 }
