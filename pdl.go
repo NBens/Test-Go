@@ -2,10 +2,10 @@ package main
 
 import (
 	"encoding/xml"
-	"fmt"
 	"log"
 	"net/http"
 	"regexp"
+	"time"
 )
 
 // Declaring PoorlyDrawnLines RSS Link
@@ -67,11 +67,12 @@ type Guid struct {
 type PDLElement struct {
 	title          string
 	url            string
-	publishingDate string
+	publishingDate time.Time
 	pictureUrl     string
 }
 
 var PDLElementList []PDLElement
+var lastUpdatedHour int
 
 // This function makes a request to PDL's RSS feed
 func getRSSFeed() (Rss, error) {
@@ -89,8 +90,8 @@ func getRSSFeed() (Rss, error) {
 	return RSSFeed, nil
 }
 
-func main() {
-	// Regex code to match URLs
+func updatePDLContent(elemList *[]PDLElement) {
+	// Regex code to match URLs (Encoded element contains the image URL)
 	re := regexp.MustCompile(`(http|https):\/\/([\w\-_]+(?:(?:\.[\w\-_]+)+))([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?`)
 
 	lastFeed, err := getRSSFeed()
@@ -98,15 +99,23 @@ func main() {
 		log.Fatal("Couldn't get the latest PDL RSS feed\n", err)
 	}
 
+	timeLayout := "Mon, 02 Jan 2006 15:04:05 +0000"
+	for key, value := range lastFeed.Channel.Items {
+		t, err := time.Parse(timeLayout, value.PubDate)
+
+		if err != nil {
+			log.Fatal("Couldn't parse the time\n", err)
+		}
+
+		(*elemList)[key].title = value.Title
+		(*elemList)[key].url = value.Link
+		(*elemList)[key].publishingDate = t
+		(*elemList)[key].pictureUrl = re.FindString(value.Encoded)
+	}
+}
+
+func init() {
 	// Initialize the slice of PDL RSS elements
 	PDLElementList = make([]PDLElement, 10)
-	for key, value := range lastFeed.Channel.Items {
-
-		PDLElementList[key].title = value.Title
-		PDLElementList[key].url = value.Link
-		PDLElementList[key].publishingDate = value.PubDate
-		PDLElementList[key].pictureUrl = re.FindString(value.Encoded)
-	}
-
-	fmt.Println(PDLElementList)
+	updatePDLContent(&PDLElementList)
 }
