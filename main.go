@@ -2,16 +2,60 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
+	"sort"
+	"time"
 )
+
+type Data struct {
+	Title          string
+	Url            string
+	PublishingDate time.Time
+	PictureUrl     string
+}
+
+func consolidateData() []Data {
+
+	data := []Data{}
+	// Update the XKCD Cache Map
+	updateXContent(&xkcdCacheMap)
+
+	// Since the RSS data is updated hourly, we need to update our PDL elements list if the hour changes
+	// This can be replaced later with a background job that updates the data in a Redis db
+	if time.Now().Hour() != lastUpdatedHour {
+		updatePDLContent(&PDLElementList, &lastUpdatedHour)
+	}
+
+	// Saving PDL list to the data element
+	for _, value := range PDLElementList {
+		data = append(data, Data(value))
+	}
+
+	timeLayout := "2-1-2006"
+	for _, value := range xkcdCacheMap {
+		t, err := time.Parse(timeLayout, (value.Day + "-" + value.Month + "-" + value.Year))
+		if err != nil {
+			log.Fatal("Couldn't parse the time\n", err)
+		}
+		data = append(data, Data{
+			Title:          value.Title,
+			Url:            value.Link,
+			PictureUrl:     value.Img,
+			PublishingDate: t,
+		})
+	}
+
+	sort.Slice(data, func(i, j int) bool {
+		return data[i].PublishingDate.After(data[j].PublishingDate)
+	})
+
+	return data
+}
 
 func main() {
 
-	fmt.Println(xkcdCacheMap)
-
-	fmt.Println(PDLElementList)
+	data := consolidateData()
 
 	router := http.NewServeMux()
 
@@ -20,7 +64,7 @@ func main() {
 			w.WriteHeader(404)
 			return
 		}
-		jsonStr, err := json.Marshal(xkcdCacheMap)
+		jsonStr, err := json.Marshal(data)
 		if err != nil {
 			w.WriteHeader(500)
 			log.Print("Couldn't parse JSON\n", err)

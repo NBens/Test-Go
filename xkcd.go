@@ -97,10 +97,8 @@ func updateXContent(cacheMap *map[int]xkcdJSONStruct) {
 	if err != nil {
 		log.Fatal("Couldn't get the latest XKCD post\n", err)
 	}
-	// Check if the lates post is already cached, if it is then the other elements will also be already loaded
-	if isXPostInCache(lastPost.Num) {
-		fmt.Println(*cacheMap) // If it is then print it for now
-	} else {
+	// Check if the latest post is already cached, if it is then the other elements will also be already loaded
+	if !isXPostInCache(lastPost.Num) {
 		// If not, check the missing number posts (latest.Num - largest number in the map)
 		// And fetch them and add them to the map while also deleting the unused ones
 

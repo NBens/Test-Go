@@ -65,10 +65,10 @@ type Guid struct {
 }
 
 type PDLElement struct {
-	title          string
-	url            string
-	publishingDate time.Time
-	pictureUrl     string
+	Title          string
+	Url            string
+	PublishingDate time.Time
+	PictureUrl     string
 }
 
 var PDLElementList []PDLElement
@@ -90,7 +90,7 @@ func getRSSFeed() (Rss, error) {
 	return RSSFeed, nil
 }
 
-func updatePDLContent(elemList *[]PDLElement) {
+func updatePDLContent(elemList *[]PDLElement, updateHour *int) {
 	// Regex code to match URLs (Encoded element contains the image URL)
 	re := regexp.MustCompile(`(http|https):\/\/([\w\-_]+(?:(?:\.[\w\-_]+)+))([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?`)
 
@@ -107,15 +107,16 @@ func updatePDLContent(elemList *[]PDLElement) {
 			log.Fatal("Couldn't parse the time\n", err)
 		}
 
-		(*elemList)[key].title = value.Title
-		(*elemList)[key].url = value.Link
-		(*elemList)[key].publishingDate = t
-		(*elemList)[key].pictureUrl = re.FindString(value.Encoded)
+		(*elemList)[key].Title = value.Title
+		(*elemList)[key].Url = value.Link
+		(*elemList)[key].PublishingDate = t
+		(*elemList)[key].PictureUrl = re.FindString(value.Encoded)
 	}
+	*updateHour = time.Now().Hour()
 }
 
 func init() {
 	// Initialize the slice of PDL RSS elements
 	PDLElementList = make([]PDLElement, 10)
-	updatePDLContent(&PDLElementList)
+	updatePDLContent(&PDLElementList, &lastUpdatedHour)
 }
