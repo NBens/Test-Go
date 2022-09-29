@@ -14,21 +14,6 @@ const (
 	latestXKCDPostUrl = "https://xkcd.com/info.0.json"
 )
 
-// JSON Structure
-type xkcdJSONStruct struct {
-	Month      string `json:"month"`
-	Num        int    `json:"num"`
-	Link       string `json:"link"`
-	Year       string `json:"year"`
-	News       string `json:"news"`
-	SafeTitle  string `json:"safe_title"`
-	Transcript string `json:"transcript"`
-	Alt        string `json:"alt"`
-	Img        string `json:"img"`
-	Title      string `json:"title"`
-	Day        string `json:"day"`
-}
-
 var xkcdCacheMap map[int]xkcdJSONStruct
 
 // This function makes a request to an XKCD post with the number "num", and if the number is set to -1, then it gets the latest post
@@ -76,8 +61,8 @@ func getLatestXPosts(startNum, endNum int) (map[int]xkcdJSONStruct, error) {
 	return results, nil
 }
 
-func isXPostInCache(num int) bool {
-	_, ok := xkcdCacheMap[num]
+func isXPostInCache(num int, cacheMap *map[int]xkcdJSONStruct) bool {
+	_, ok := (*cacheMap)[num]
 	return ok
 }
 
@@ -91,6 +76,7 @@ func max(cache map[int]xkcdJSONStruct) (maxNumber int) {
 	return maxNumber
 }
 
+// This function updates the content of our global cache map
 func updateXContent(cacheMap *map[int]xkcdJSONStruct) {
 
 	lastPost, err := getLatestXPost()
@@ -98,9 +84,9 @@ func updateXContent(cacheMap *map[int]xkcdJSONStruct) {
 		log.Fatal("Couldn't get the latest XKCD post\n", err)
 	}
 	// Check if the latest post is already cached, if it is then the other elements will also be already loaded
-	if !isXPostInCache(lastPost.Num) {
-		// If not, check the missing number posts (latest.Num - largest number in the map)
-		// And fetch them and add them to the map while also deleting the unused ones
+	// If not, check the missing number posts (latest.Num - largest number in the map)
+	// And fetch them and add them to the map while also deleting the unused ones
+	if !isXPostInCache(lastPost.Num, cacheMap) {
 
 		currentMaxKey := 9
 		if len(*cacheMap) > 0 {

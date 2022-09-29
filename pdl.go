@@ -13,68 +13,10 @@ const (
 	PDLRSSFeed = "https://feeds.feedburner.com/PoorlyDrawnLines"
 )
 
-// XML Structs for decode
-type Rss struct {
-	XMLName xml.Name `xml:"rss"`
-	Text    string   `xml:",chardata"`
-	Content string   `xml:"content,attr"`
-	Wfw     string   `xml:"wfw,attr"`
-	Dc      string   `xml:"dc,attr"`
-	Atom    string   `xml:"atom,attr"`
-	Sy      string   `xml:"sy,attr"`
-	Slash   string   `xml:"slash,attr"`
-	Version string   `xml:"version,attr"`
-	Channel Channel  `xml:"channel"`
-}
-
-type Channel struct {
-	Text            string `xml:",chardata"`
-	Title           string `xml:"title"`
-	Link            Link   `xml:"link"`
-	Description     string `xml:"description"`
-	LastBuildDate   string `xml:"lastBuildDate"`
-	Language        string `xml:"language"`
-	UpdatePeriod    string `xml:"updatePeriod"`
-	UpdateFrequency string `xml:"updateFrequency"`
-	Generator       string `xml:"generator"`
-	Items           []Item `xml:"item"`
-}
-
-type Link struct {
-	Text string `xml:",chardata"`
-	Href string `xml:"href,attr"`
-	Rel  string `xml:"rel,attr"`
-	Type string `xml:"type,attr"`
-}
-
-type Item struct {
-	Text        string `xml:",chardata"`
-	Title       string `xml:"title"`
-	Link        string `xml:"link"`
-	Creator     string `xml:"creator"`
-	PubDate     string `xml:"pubDate"`
-	Category    string `xml:"category"`
-	Guid        Guid   `xml:"guid"`
-	Description string `xml:"description"`
-	Encoded     string `xml:"encoded"`
-}
-
-type Guid struct {
-	Text        string `xml:",chardata"`
-	IsPermaLink string `xml:"isPermaLink,attr"`
-}
-
-type PDLElement struct {
-	Title          string
-	Url            string
-	PublishingDate time.Time
-	PictureUrl     string
-}
-
 var PDLElementList []PDLElement
-var lastUpdatedHour int
+var lastUpdatedHour int // This will keep track of the time of our last update of the RSS feed
 
-// This function makes a request to PDL's RSS feed
+// This function makes a request to PDL's RSS feed and unmarshalls the XML into our structs
 func getRSSFeed() (Rss, error) {
 	response, err := http.Get(PDLRSSFeed)
 	if err != nil {
@@ -90,6 +32,7 @@ func getRSSFeed() (Rss, error) {
 	return RSSFeed, nil
 }
 
+// This function updates the content of our global list of elements ([]PDLElement)
 func updatePDLContent(elemList *[]PDLElement, updateHour *int) {
 	// Regex code to match URLs (Encoded element contains the image URL)
 	re := regexp.MustCompile(`(http|https):\/\/([\w\-_]+(?:(?:\.[\w\-_]+)+))([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?`)
