@@ -55,8 +55,6 @@ func consolidateData() []Data {
 
 func main() {
 
-	data := consolidateData()
-
 	router := http.NewServeMux()
 
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +62,7 @@ func main() {
 			w.WriteHeader(404)
 			return
 		}
+		data := consolidateData()
 		jsonStr, err := json.Marshal(data)
 		if err != nil {
 			w.WriteHeader(500)

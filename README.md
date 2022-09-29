@@ -10,3 +10,5 @@ To finish this REST API, we need to:
 - [X] GET Endpoint
 - [ ] Clean up
 - [ ] Testing
+
+To run this code, clone the repo, run the command `go mod tidy` then run `go run .`
